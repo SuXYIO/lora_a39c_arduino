@@ -1,0 +1,145 @@
+#include "LoraA39C.h"
+#include "Arduino.h"
+
+// helper functions
+namespace {
+// clear stream buffer
+void bufClear(Stream &serial) {
+    while (serial.read() >= 0) {
+    }
+}
+
+// check return of stream
+bool checkRet(Stream &serial, byte buf[], size_t len) {
+    // NOTE: might run forever
+    size_t cnt = 0;
+    while (true) {
+        if (cnt >= len)
+            break;
+        if (serial.available() > 0) {
+            byte ret = serial.read();
+
+            if (ret != buf[cnt]) {
+                // wrong value
+                return false;
+            }
+            cnt++;
+        }
+    }
+    bufClear(serial);
+    return true;
+}
+} // namespace
+
+LoraA39C::LoraA39C(Stream &serial, byte pin_md0, byte pin_md1, Config config)
+    : serial(serial), pin_md0(pin_md0), pin_md1(pin_md1), config(config) {}
+
+bool LoraA39C::handshake() {
+    byte msg[] = {0, 0, 1};
+    serial.write(msg, 3);
+    delay(100);
+
+    return checkRet(serial, msg, 3); // yes, correct is same as msg
+}
+
+bool LoraA39C::reset() {
+    byte msg[] = {0x80, 0x23, 0x01};
+    serial.write(msg, 3);
+    delay(140);
+
+    byte correct_buf[] = {13, 10, 79, 75, 13, 10};
+    return checkRet(serial, correct_buf, 6);
+}
+
+void LoraA39C::toMode(ModuleModes mode) {
+    switch (mode) {
+    case ModuleModes::Config:
+        digitalWrite(pin_md0, LOW);
+        digitalWrite(pin_md1, LOW);
+        delay(120);
+        break;
+    case ModuleModes::Work:
+        digitalWrite(pin_md0, HIGH);
+        digitalWrite(pin_md1, LOW);
+        delay(120);
+        break;
+    }
+}
+
+size_t LoraA39C::print(String str) {
+    // and don't ask me why sending to local address results in sending to other
+    serial.write(config.group);
+    serial.write(config.addr);
+    serial.write(config.channel);
+    return serial.print(str) + 3;
+}
+
+/*
+ * These are definitions for the config options that i did not abstract and make
+ * available in Config class, I really recommend going through the module docs
+ * if you want to modify this, since it's raw register values.
+ */
+// Baud Rate
+#define LORA_BAUDRATE 0x00, 0x00, 0x25, 0x80
+// LoraSerial Arguments
+/* bit5[stopBits = 1 (0b0)],
+      bit4[frameLen = dataBits + correctionBits = 8 (0b0)],
+      bit(2,1)[correctionBits = NONE (0b00)]
+  therefore data = 0b000000 */
+#define LORAserialARGS 0x00
+// Transmission Mode
+// 0x01 for transparent, 0x02 for fix-point, others in the docs
+#define LORA_WORKMODE 0x00, 0x02
+// Main Mode or Follow Mode
+#define LORA_MAINORFOLLOW 0x00
+// Pack Size
+#define LORA_PACKSIZE 64
+// Sleep Time
+#define LORA_SLEEPTIME 0
+// Group & Addr
+#define LORA_TARGGROUP 0 // unused in fix point mode
+#define LORA_TARGADDR 0  // unused in fix point mode
+bool LoraA39C::configure() {
+    // HACK: serial must be 9600, 8N1
+    byte buf[] = {
+        0x80, 0x04,
+        0x1E,           // cmd, 0x80 write local success, return if error
+        LORA_BAUDRATE,  // 0x04
+        LORAserialARGS, // 0x05
+
+        // Transmission Arguments
+        /* bit(11,5)[channel = 20 (0b0010100)],
+                  bit(4,3)[power = 21dBm (0b11)],
+                  bit(2,0)[airSpeed = 4.8K (0b010)]
+          therefore data = 0b001010011010 */
+        (byte)(config.channel >> 3),
+        (byte)((config.channel << 5) + 0b11010), // 0x06
+
+        LORA_WORKMODE, // 0x07
+        0x05, 0x03,
+        0xE8,              // 0x08 to 0x09, preserved
+        LORA_MAINORFOLLOW, // 0x0A
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, // AES key, set to anything you like
+        0x7C, 0x7C, 0x7C, 0x7C, 0x7C,
+        0x05,          // 0x0C to 0x0D, preserved
+        LORA_PACKSIZE, // 0x0E
+        0x00, 0x23, 0x00, 0x00, 0x00, 0x3C,
+        0x3C,           // 0x0F to 0x13, preserved
+        LORA_SLEEPTIME, // 0x14
+        0x0A,
+        0x19, // 0x15 to 0x16, preserved
+        0x00,
+        0x80,           // 0x17, default, which is enable wireless wake code
+        config.group,   // 0x18
+        config.addr,    // 0x19
+        LORA_TARGGROUP, // 0x1A
+        LORA_TARGADDR,  // 0x1B
+        0x00, 0x00, 0x00, 0x00, 0x17,
+        0x02 // 0x1C to 0x21, related to relay mode
+    };
+
+    serial.write(buf, 61);
+    byte correct_buf[] = {0x80, 0x04, 0x1E};
+    return checkRet(serial, correct_buf, 3);
+}
