@@ -1,35 +1,6 @@
 #include "LoraA39C.h"
 #include "Arduino.h"
-
-// helper functions
-namespace {
-// clear stream buffer
-void bufClear(Stream &serial) {
-    while (serial.read() >= 0) {
-    }
-}
-
-// check return of stream
-bool checkRet(Stream &serial, byte buf[], size_t len) {
-    // NOTE: might run forever
-    size_t cnt = 0;
-    while (true) {
-        if (cnt >= len)
-            break;
-        if (serial.available() > 0) {
-            byte ret = serial.read();
-
-            if (ret != buf[cnt]) {
-                // wrong value
-                return false;
-            }
-            cnt++;
-        }
-    }
-    bufClear(serial);
-    return true;
-}
-} // namespace
+#include "utils/utils.h"
 
 LoraA39C::LoraA39C(Stream &serial, byte pin_md0, byte pin_md1, Config config)
     : serial(serial), pin_md0(pin_md0), pin_md1(pin_md1), config(config) {}
