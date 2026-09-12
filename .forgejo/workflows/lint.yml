@@ -8,3 +8,4 @@ jobs:
       - uses: https://github.com/arduino/arduino-lint-action@v3
         with:
           compliance: strict
+          token: ${{ secrets.GH_TOKEN }}
