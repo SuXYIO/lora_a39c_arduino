@@ -4,7 +4,7 @@
 #include "Arduino.h"
 
 // the status the module is in
-enum class ModuleModes {
+enum class Modes {
     Config,
     Work,
     // NOTE: Not supported yet:
@@ -18,7 +18,7 @@ struct Config {
     byte addr;
 };
 
-class LoraA39C : public Stream {
+class LoraA39C {
   public:
     LoraA39C(Stream &, byte, byte, Config);
 
@@ -27,11 +27,11 @@ class LoraA39C : public Stream {
     byte pin_md1;
     Config config;
 
-    void toMode(ModuleModes);
+    void enterMode(Modes);
     bool handshake();
     bool reset();
     bool configure();
-    size_t print(String);
+    size_t send(const String &);
 };
 
 #endif

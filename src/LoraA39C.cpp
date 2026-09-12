@@ -22,14 +22,16 @@ bool LoraA39C::reset() {
     return checkRet(serial, correct_buf, 6);
 }
 
-void LoraA39C::toMode(ModuleModes mode) {
+void LoraA39C::enterMode(Modes mode) {
+    pinMode(pin_md0, OUTPUT);
+    pinMode(pin_md1, OUTPUT);
     switch (mode) {
-    case ModuleModes::Config:
+    case Modes::Config:
         digitalWrite(pin_md0, LOW);
         digitalWrite(pin_md1, LOW);
         delay(120);
         break;
-    case ModuleModes::Work:
+    case Modes::Work:
         digitalWrite(pin_md0, HIGH);
         digitalWrite(pin_md1, LOW);
         delay(120);
@@ -37,7 +39,7 @@ void LoraA39C::toMode(ModuleModes mode) {
     }
 }
 
-size_t LoraA39C::print(String str) {
+size_t LoraA39C::send(const String &str) {
     // and don't ask me why sending to local address results in sending to other
     serial.write(config.group);
     serial.write(config.addr);
@@ -70,8 +72,12 @@ size_t LoraA39C::print(String str) {
 // Group & Addr
 #define LORA_TARGGROUP 0 // unused in fix point mode
 #define LORA_TARGADDR 0  // unused in fix point mode
+
+// configure the module. automatically enters config mode, and enters work mode
+// after.
 bool LoraA39C::configure() {
     // HACK: serial must be 9600, 8N1
+    enterMode(Modes::Config);
     byte buf[] = {
         0x80, 0x04,
         0x1E,           // cmd, 0x80 write local success, return if error
@@ -112,5 +118,11 @@ bool LoraA39C::configure() {
 
     serial.write(buf, 61);
     byte correct_buf[] = {0x80, 0x04, 0x1E};
-    return checkRet(serial, correct_buf, 3);
+    delay(100);
+    if (!checkRet(serial, correct_buf, 3)) {
+        return false;
+    }
+
+    enterMode(Modes::Work);
+    return true;
 }
