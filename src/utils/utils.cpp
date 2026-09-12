@@ -18,6 +18,7 @@ bool checkRet(Stream &serial, byte buf[], size_t len) {
 
             if (ret != buf[cnt]) {
                 // wrong value
+                bufClear(serial);
                 return false;
             }
             cnt++;

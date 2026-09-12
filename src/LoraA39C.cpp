@@ -1,9 +1,27 @@
 #include "LoraA39C.h"
-#include "Arduino.h"
 #include "utils/utils.h"
 
 LoraA39C::LoraA39C(Stream &serial, byte pin_md0, byte pin_md1, Config config)
-    : serial(serial), pin_md0(pin_md0), pin_md1(pin_md1), config(config) {}
+    : serial(serial), _pin_md0(pin_md0), _pin_md1(pin_md1), _config(config) {}
+
+bool LoraA39C::begin() {
+    if (_config.channel > 0b01111111)
+        return false;
+
+    pinMode(_pin_md0, OUTPUT);
+    pinMode(_pin_md1, OUTPUT);
+
+    enterMode(Modes::Config);
+
+    if (!handshake())
+        return false;
+    if (!configure())
+        return false;
+
+    enterMode(Modes::Work);
+
+    return true;
+}
 
 bool LoraA39C::handshake() {
     byte msg[] = {0, 0, 1};
@@ -23,17 +41,15 @@ bool LoraA39C::reset() {
 }
 
 void LoraA39C::enterMode(Modes mode) {
-    pinMode(pin_md0, OUTPUT);
-    pinMode(pin_md1, OUTPUT);
     switch (mode) {
     case Modes::Config:
-        digitalWrite(pin_md0, LOW);
-        digitalWrite(pin_md1, LOW);
+        digitalWrite(_pin_md0, LOW);
+        digitalWrite(_pin_md1, LOW);
         delay(120);
         break;
     case Modes::Work:
-        digitalWrite(pin_md0, HIGH);
-        digitalWrite(pin_md1, LOW);
+        digitalWrite(_pin_md0, HIGH);
+        digitalWrite(_pin_md1, LOW);
         delay(120);
         break;
     }
@@ -41,14 +57,14 @@ void LoraA39C::enterMode(Modes mode) {
 
 size_t LoraA39C::send(const String &str) {
     // and don't ask me why sending to local address results in sending to other
-    serial.write(config.group);
-    serial.write(config.addr);
-    serial.write(config.channel);
+    serial.write(_config.group);
+    serial.write(_config.addr);
+    serial.write(_config.channel);
     return serial.print(str) + 3;
 }
 
 /*
- * These are definitions for the config options that i did not abstract and make
+ * These are definitions for the config options that i did not abstract and made
  * available in Config class, I really recommend going through the module docs
  * if you want to modify this, since it's raw register values.
  */
@@ -73,11 +89,8 @@ size_t LoraA39C::send(const String &str) {
 #define LORA_TARGGROUP 0 // unused in fix point mode
 #define LORA_TARGADDR 0  // unused in fix point mode
 
-// configure the module. automatically enters config mode, and enters work mode
-// after.
 bool LoraA39C::configure() {
-    // HACK: serial must be 9600, 8N1
-    enterMode(Modes::Config);
+    // NOTE: serial must be 9600, 8N1
     byte buf[] = {
         0x80, 0x04,
         0x1E,           // cmd, 0x80 write local success, return if error
@@ -89,8 +102,8 @@ bool LoraA39C::configure() {
                   bit(4,3)[power = 21dBm (0b11)],
                   bit(2,0)[airSpeed = 4.8K (0b010)]
           therefore data = 0b001010011010 */
-        (byte)(config.channel >> 3),
-        (byte)((config.channel << 5) + 0b11010), // 0x06
+        (byte)(_config.channel >> 3),
+        (byte)((_config.channel << 5) + 0b11010), // 0x06
 
         LORA_WORKMODE, // 0x07
         0x05, 0x03,
@@ -108,8 +121,8 @@ bool LoraA39C::configure() {
         0x19, // 0x15 to 0x16, preserved
         0x00,
         0x80,           // 0x17, default, which is enable wireless wake code
-        config.group,   // 0x18
-        config.addr,    // 0x19
+        _config.group,  // 0x18
+        _config.addr,   // 0x19
         LORA_TARGGROUP, // 0x1A
         LORA_TARGADDR,  // 0x1B
         0x00, 0x00, 0x00, 0x00, 0x17,
@@ -123,6 +136,5 @@ bool LoraA39C::configure() {
         return false;
     }
 
-    enterMode(Modes::Work);
     return true;
 }
