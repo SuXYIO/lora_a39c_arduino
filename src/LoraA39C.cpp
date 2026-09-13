@@ -1,15 +1,15 @@
 #include "LoraA39C.h"
 #include "utils/utils.h"
 
-LoraA39C::LoraA39C(Stream &serial, byte pin_md0, byte pin_md1, Config config)
-    : serial(serial), _pin_md0(pin_md0), _pin_md1(pin_md1), _config(config) {}
+LoraA39C::LoraA39C(Stream &serial, byte pinMd0, byte pinMd1, Config config)
+    : serial(serial), _pinMd0(pinMd0), _pinMd1(pinMd1), _config(config) {}
 
 bool LoraA39C::begin() {
     if (_config.channel > 0b01111111)
         return false;
 
-    pinMode(_pin_md0, OUTPUT);
-    pinMode(_pin_md1, OUTPUT);
+    pinMode(_pinMd0, OUTPUT);
+    pinMode(_pinMd1, OUTPUT);
 
     enterMode(Modes::Config);
 
@@ -43,13 +43,13 @@ bool LoraA39C::reset() {
 void LoraA39C::enterMode(Modes mode) {
     switch (mode) {
     case Modes::Config:
-        digitalWrite(_pin_md0, LOW);
-        digitalWrite(_pin_md1, LOW);
+        digitalWrite(_pinMd0, LOW);
+        digitalWrite(_pinMd1, LOW);
         delay(120);
         break;
     case Modes::Work:
-        digitalWrite(_pin_md0, HIGH);
-        digitalWrite(_pin_md1, LOW);
+        digitalWrite(_pinMd0, HIGH);
+        digitalWrite(_pinMd1, LOW);
         delay(120);
         break;
     }
@@ -75,7 +75,7 @@ size_t LoraA39C::send(const String &str) {
       bit4[frameLen = dataBits + correctionBits = 8 (0b0)],
       bit(2,1)[correctionBits = NONE (0b00)]
   therefore data = 0b000000 */
-#define LORAserialARGS 0x00
+#define LORA_SERIAL_ARGS 0x00
 // Transmission Mode
 // 0x01 for transparent, 0x02 for fix-point, others in the docs
 #define LORA_WORKMODE 0x00, 0x02
@@ -93,9 +93,9 @@ bool LoraA39C::configure() {
     // NOTE: serial must be 9600, 8N1
     byte buf[] = {
         0x80, 0x04,
-        0x1E,           // cmd, 0x80 write local success, return if error
-        LORA_BAUDRATE,  // 0x04
-        LORAserialARGS, // 0x05
+        0x1E,             // cmd, 0x80 write local success, return if error
+        LORA_BAUDRATE,    // 0x04
+        LORA_SERIAL_ARGS, // 0x05
 
         // Transmission Arguments
         /* bit(11,5)[channel = 20 (0b0010100)],
