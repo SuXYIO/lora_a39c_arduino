@@ -55,12 +55,30 @@ void LoraA39C::enterMode(Modes mode) {
     }
 }
 
-size_t LoraA39C::send(const String &str) {
+// sends the fix-point packet header
+size_t LoraA39C::sendHeader() {
     // and don't ask me why sending to local address results in sending to other
     _serial.write(_config.group);
     _serial.write(_config.addr);
     _serial.write(_config.channel);
-    return _serial.print(str) + 3;
+    return 3;
+}
+
+size_t LoraA39C::send(const String &str) {
+    size_t n = sendHeader();
+    return n + _serial.print(str);
+}
+size_t LoraA39C::send(const char *str) {
+    size_t n = sendHeader();
+    return n + _serial.print(str);
+}
+size_t LoraA39C::send(const __FlashStringHelper *str) {
+    size_t n = sendHeader();
+    return n + _serial.print(str);
+}
+size_t LoraA39C::send(const uint8_t *buf, size_t len) {
+    size_t n = sendHeader();
+    return n + _serial.write(buf, len);
 }
 
 /*
