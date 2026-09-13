@@ -2,7 +2,7 @@
 #include "utils/utils.h"
 
 LoraA39C::LoraA39C(Stream &serial, byte pinMd0, byte pinMd1, Config config)
-    : serial(serial), _pinMd0(pinMd0), _pinMd1(pinMd1), _config(config) {}
+    : _serial(serial), _pinMd0(pinMd0), _pinMd1(pinMd1), _config(config) {}
 
 bool LoraA39C::begin() {
     if (_config.channel > 0b01111111)
@@ -25,19 +25,19 @@ bool LoraA39C::begin() {
 
 bool LoraA39C::handshake() {
     byte msg[] = {0, 0, 1};
-    serial.write(msg, 3);
+    _serial.write(msg, 3);
     delay(100);
 
-    return checkRet(serial, msg, 3); // yes, correct is same as msg
+    return checkRet(_serial, msg, 3); // yes, correct is same as msg
 }
 
 bool LoraA39C::reset() {
     byte msg[] = {0x80, 0x23, 0x01};
-    serial.write(msg, 3);
+    _serial.write(msg, 3);
     delay(140);
 
     byte correct_buf[] = {13, 10, 79, 75, 13, 10};
-    return checkRet(serial, correct_buf, 6);
+    return checkRet(_serial, correct_buf, 6);
 }
 
 void LoraA39C::enterMode(Modes mode) {
@@ -57,10 +57,10 @@ void LoraA39C::enterMode(Modes mode) {
 
 size_t LoraA39C::send(const String &str) {
     // and don't ask me why sending to local address results in sending to other
-    serial.write(_config.group);
-    serial.write(_config.addr);
-    serial.write(_config.channel);
-    return serial.print(str) + 3;
+    _serial.write(_config.group);
+    _serial.write(_config.addr);
+    _serial.write(_config.channel);
+    return _serial.print(str) + 3;
 }
 
 /*
@@ -129,10 +129,10 @@ bool LoraA39C::configure() {
         0x02 // 0x1C to 0x21, related to relay mode
     };
 
-    serial.write(buf, 61);
+    _serial.write(buf, 61);
     byte correct_buf[] = {0x80, 0x04, 0x1E};
     delay(100);
-    if (!checkRet(serial, correct_buf, 3)) {
+    if (!checkRet(_serial, correct_buf, 3)) {
         return false;
     }
 

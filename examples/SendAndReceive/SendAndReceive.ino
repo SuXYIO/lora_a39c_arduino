@@ -13,11 +13,11 @@ void setup() {
 
 void loop() {
   if (Serial.available() > 0) {
-    String send = loraSerial.readStringUntil('\n');
+    String send = lora.readStringUntil('\n');
     lora.send(send + "\n");
   }
-  if (loraSerial.available() > 0) {
-    String received = loraSerial.readStringUntil('\n');
+  if (lora.available() > 0) {
+    String received = lora.readStringUntil('\n');
     Serial.println(received);
   }
 }
