@@ -17,6 +17,7 @@ class LoraA39C : private Stream {
     LoraA39C(Stream &, byte, byte, Config);
 
     bool begin();
+    void end();
     size_t send(const String &);
     size_t send(const char *);
     size_t send(const __FlashStringHelper *);
@@ -54,8 +55,7 @@ class LoraA39C : private Stream {
     enum class Modes {
         Config,
         Work,
-        // NOTE: Not supported yet:
-        // LowPower,
+        LowPower,
     };
 
     bool handshake();

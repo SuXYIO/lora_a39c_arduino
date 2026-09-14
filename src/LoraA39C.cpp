@@ -23,6 +23,12 @@ bool LoraA39C::begin() {
     return true;
 }
 
+void LoraA39C::end() {
+    enterMode(Modes::LowPower);
+    pinMode(_pinMd0, INPUT);
+    pinMode(_pinMd1, INPUT);
+}
+
 bool LoraA39C::handshake() {
     byte msg[] = {0, 0, 1};
     _serial.write(msg, 3);
@@ -45,14 +51,17 @@ void LoraA39C::enterMode(Modes mode) {
     case Modes::Config:
         digitalWrite(_pinMd0, LOW);
         digitalWrite(_pinMd1, LOW);
-        delay(120);
         break;
     case Modes::Work:
         digitalWrite(_pinMd0, HIGH);
         digitalWrite(_pinMd1, LOW);
-        delay(120);
+        break;
+    case Modes::LowPower:
+        digitalWrite(_pinMd0, HIGH);
+        digitalWrite(_pinMd1, HIGH);
         break;
     }
+    delay(120);
 }
 
 // sends the fix-point packet header
