@@ -14,7 +14,7 @@ void setup() {
 
 void loop() {
   if (Serial.available() > 0) {
-    String send = lora.readStringUntil('\n');
+    String send = Serial.readStringUntil('\n');
     lora.send(send + "\n");
   }
   if (lora.available() > 0) {
