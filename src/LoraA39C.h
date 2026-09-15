@@ -16,6 +16,7 @@ class LoraA39C : private Stream {
 
     LoraA39C(Stream &, byte, byte, Config);
 
+    void setLog(Stream *); // enables log if is not nullptr
     bool begin();
     void end();
     size_t send(const String &);
@@ -50,6 +51,7 @@ class LoraA39C : private Stream {
     byte _pinMd0;
     byte _pinMd1;
     Config _config;
+    Stream *_log = nullptr;
 
     // the status the module is in
     enum class Modes {
@@ -57,6 +59,9 @@ class LoraA39C : private Stream {
         Work,
         LowPower,
     };
+
+    void log(const __FlashStringHelper *);
+    void log(const String);
 
     bool handshake();
     bool reset();

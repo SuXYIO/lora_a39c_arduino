@@ -4,6 +4,11 @@
 LoraA39C::LoraA39C(Stream &serial, byte pinMd0, byte pinMd1, Config config)
     : _serial(serial), _pinMd0(pinMd0), _pinMd1(pinMd1), _config(config) {}
 
+void LoraA39C::setLog(Stream *logStream) {
+    _log = logStream;
+    log(F("INFO: log enabled"));
+}
+
 bool LoraA39C::begin() {
     if (_config.channel > 0b01111111)
         return false;
@@ -15,10 +20,14 @@ bool LoraA39C::begin() {
 
     if (!handshake())
         return false;
+    if (!reset())
+        return false;
     if (!configure())
         return false;
 
     enterMode(Modes::Work);
+
+    log(F("INFO: begin ok"));
 
     return true;
 }
@@ -29,12 +38,31 @@ void LoraA39C::end() {
     pinMode(_pinMd1, INPUT);
 }
 
+void LoraA39C::log(const __FlashStringHelper *str) {
+    if (_log != nullptr) {
+        _log->print("LoraA39C: ");
+        _log->println(str);
+    }
+}
+void LoraA39C::log(const String str) {
+    if (_log != nullptr) {
+        _log->print("LoraA39C: ");
+        _log->println(str);
+    }
+}
+
 bool LoraA39C::handshake() {
     byte msg[] = {0, 0, 1};
     _serial.write(msg, 3);
     delay(100);
 
-    return checkRet(_serial, msg, 3); // yes, correct is same as msg
+    bool ok = checkRet(_serial, msg, 3); // yes, correct is same as msg
+    if (ok) {
+        log(F("INFO: handshake ok"));
+    } else {
+        log(F("INFO: handshake fail"));
+    }
+    return ok;
 }
 
 bool LoraA39C::reset() {
@@ -43,7 +71,13 @@ bool LoraA39C::reset() {
     delay(140);
 
     byte correct_buf[] = {13, 10, 79, 75, 13, 10};
-    return checkRet(_serial, correct_buf, 6);
+    bool ok = checkRet(_serial, correct_buf, 6);
+    if (ok) {
+        log(F("INFO: reset ok"));
+    } else {
+        log(F("INFO: reset fail"));
+    }
+    return ok;
 }
 
 void LoraA39C::enterMode(Modes mode) {
@@ -51,14 +85,17 @@ void LoraA39C::enterMode(Modes mode) {
     case Modes::Config:
         digitalWrite(_pinMd0, LOW);
         digitalWrite(_pinMd1, LOW);
+        log(F("INFO: entered config mode"));
         break;
     case Modes::Work:
         digitalWrite(_pinMd0, HIGH);
         digitalWrite(_pinMd1, LOW);
+        log(F("INFO: entered work mode"));
         break;
     case Modes::LowPower:
         digitalWrite(_pinMd0, HIGH);
         digitalWrite(_pinMd1, HIGH);
+        log(F("INFO: entered low power mode"));
         break;
     }
     delay(120);
@@ -118,7 +155,7 @@ size_t LoraA39C::send(const uint8_t *buf, size_t len) {
 
 bool LoraA39C::configure() {
     // NOTE: serial must be 9600, 8N1
-    byte buf[] = {
+    byte buf[61] = {
         0x80, 0x04,
         0x1E,             // cmd, 0x80 write local success, return if error
         LORA_BAUDRATE,    // 0x04
@@ -159,9 +196,11 @@ bool LoraA39C::configure() {
     _serial.write(buf, 61);
     byte correct_buf[] = {0x80, 0x04, 0x1E};
     delay(100);
-    if (!checkRet(_serial, correct_buf, 3)) {
-        return false;
+    bool ok = checkRet(_serial, correct_buf, 3);
+    if (ok) {
+        log(F("INFO: configure ok"));
+    } else {
+        log(F("INFO: configure fail"));
     }
-
-    return true;
+    return ok;
 }
