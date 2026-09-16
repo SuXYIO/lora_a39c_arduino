@@ -10,7 +10,12 @@ LoraA39C::Address target = {42, 67, 2};
 
 void setup() {
   Serial.begin(9600);
-  loraSerial.begin(9600);
+  if (!loraSerial.begin(9600)) {
+    Serial.println(F("ERROR: Lora begin failed, entering infinite loop."));
+    while (true) {
+      delay(1000);
+    }
+  }
   lora.setLog(&Serial);
   lora.begin();
   lora.send(target, F("Lora module initialized\n"));
