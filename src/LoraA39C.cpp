@@ -10,7 +10,7 @@ void LoraA39C::setLog(Stream *logStream) {
 }
 
 bool LoraA39C::begin() {
-    if (_config.channel > 0b01111111)
+    if (_config.address.channel > 0b01111111)
         return false;
 
     pinMode(_pinMd0, OUTPUT);
@@ -102,28 +102,30 @@ void LoraA39C::enterMode(Modes mode) {
 }
 
 // sends the fix-point packet header
-size_t LoraA39C::sendHeader() {
+size_t LoraA39C::sendHeader(LoraA39C::Address targetAddress) {
     // and don't ask me why sending to local address results in sending to other
-    _serial.write(_config.group);
-    _serial.write(_config.addr);
-    _serial.write(_config.channel);
+    _serial.write(targetAddress.group);
+    _serial.write(targetAddress.addr);
+    _serial.write(targetAddress.channel);
     return 3;
 }
 
-size_t LoraA39C::send(const String &str) {
-    size_t n = sendHeader();
+size_t LoraA39C::send(LoraA39C::Address targetAddress, const String &str) {
+    size_t n = sendHeader(targetAddress);
     return n + _serial.print(str);
 }
-size_t LoraA39C::send(const char *str) {
-    size_t n = sendHeader();
+size_t LoraA39C::send(LoraA39C::Address targetAddress, const char *str) {
+    size_t n = sendHeader(targetAddress);
     return n + _serial.print(str);
 }
-size_t LoraA39C::send(const __FlashStringHelper *str) {
-    size_t n = sendHeader();
+size_t LoraA39C::send(LoraA39C::Address targetAddress,
+                      const __FlashStringHelper *str) {
+    size_t n = sendHeader(targetAddress);
     return n + _serial.print(str);
 }
-size_t LoraA39C::send(const uint8_t *buf, size_t len) {
-    size_t n = sendHeader();
+size_t LoraA39C::send(LoraA39C::Address targetAddress, const uint8_t *buf,
+                      size_t len) {
+    size_t n = sendHeader(targetAddress);
     return n + _serial.write(buf, len);
 }
 
@@ -166,8 +168,8 @@ bool LoraA39C::configure() {
                   bit(4,3)[power = 21dBm (0b11)],
                   bit(2,0)[airSpeed = 4.8K (0b010)]
           therefore data = 0b001010011010 */
-        (byte)(_config.channel >> 3),
-        (byte)((_config.channel << 5) + 0b11010), // 0x06
+        (byte)(_config.address.channel >> 3),
+        (byte)((_config.address.channel << 5) + 0b11010), // 0x06
 
         LORA_WORKMODE, // 0x07
         0x05, 0x03,
@@ -184,11 +186,11 @@ bool LoraA39C::configure() {
         0x0A,
         0x19, // 0x15 to 0x16, preserved
         0x00,
-        0x80,           // 0x17, default, which is enable wireless wake code
-        _config.group,  // 0x18
-        _config.addr,   // 0x19
-        LORA_TARGGROUP, // 0x1A
-        LORA_TARGADDR,  // 0x1B
+        0x80, // 0x17, default, which is enable wireless wake code
+        _config.address.group, // 0x18
+        _config.address.addr,  // 0x19
+        LORA_TARGGROUP,        // 0x1A
+        LORA_TARGADDR,         // 0x1B
         0x00, 0x00, 0x00, 0x00, 0x17,
         0x02 // 0x1C to 0x21, related to relay mode
     };

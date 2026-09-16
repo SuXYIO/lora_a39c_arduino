@@ -8,10 +8,13 @@
 class LoraA39C : private Stream {
   public:
     // NOTE: this is a very limited subset of the config
-    struct Config {
+    struct Address {
         byte channel;
         byte group;
         byte addr;
+    };
+    struct Config {
+        Address address;
     };
 
     LoraA39C(Stream &, byte, byte, Config);
@@ -19,10 +22,10 @@ class LoraA39C : private Stream {
     void setLog(Stream *); // enables log if is not nullptr
     bool begin();
     void end();
-    size_t send(const String &);
-    size_t send(const char *);
-    size_t send(const __FlashStringHelper *);
-    size_t send(const uint8_t *, size_t);
+    size_t send(LoraA39C::Address targetAddress, const String &);
+    size_t send(LoraA39C::Address targetAddress, const char *);
+    size_t send(LoraA39C::Address targetAddress, const __FlashStringHelper *);
+    size_t send(LoraA39C::Address targetAddress, const uint8_t *, size_t);
 
     // read-only fields access functions
     byte pinMd0() { return _pinMd0; }
@@ -67,7 +70,7 @@ class LoraA39C : private Stream {
     bool reset();
     bool configure();
     void enterMode(Modes);
-    size_t sendHeader();
+    size_t sendHeader(Address);
 
     // HACK: this is purely for satisfying inheritance,
     // and MUST NOT BE EXPOSED!
