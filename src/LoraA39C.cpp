@@ -60,7 +60,7 @@ bool LoraA39C::handshake() {
     if (ok) {
         log(F("INFO: handshake ok"));
     } else {
-        log(F("INFO: handshake fail"));
+        log(F("ERROR: handshake fail"));
     }
     return ok;
 }
@@ -75,7 +75,7 @@ bool LoraA39C::reset() {
     if (ok) {
         log(F("INFO: reset ok"));
     } else {
-        log(F("INFO: reset fail"));
+        log(F("ERROR: reset fail"));
     }
     return ok;
 }
@@ -202,7 +202,7 @@ bool LoraA39C::configure() {
     if (ok) {
         log(F("INFO: configure ok"));
     } else {
-        log(F("INFO: configure fail"));
+        log(F("ERROR: configure fail"));
     }
     return ok;
 }
