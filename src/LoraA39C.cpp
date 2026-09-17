@@ -103,7 +103,6 @@ void LoraA39C::enterMode(Modes mode) {
 
 // sends the fix-point packet header
 size_t LoraA39C::sendHeader(LoraA39C::Address targetAddress) {
-    // and don't ask me why sending to local address results in sending to other
     _serial.write(targetAddress.group);
     _serial.write(targetAddress.addr);
     _serial.write(targetAddress.channel);
