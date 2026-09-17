@@ -19,7 +19,7 @@ void setup() {
       delay(1000);
     }
   }
-  lora.send(target, F("Lora module initialized\n"));
+  lora.send(target, F("Hello world!"));
 }
 
 void loop() {
