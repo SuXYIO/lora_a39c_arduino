@@ -64,7 +64,7 @@ class LoraA39C : private Stream {
     };
 
     void log(const __FlashStringHelper *);
-    void log(const String);
+    void log(const String &);
 
     bool handshake();
     bool reset();

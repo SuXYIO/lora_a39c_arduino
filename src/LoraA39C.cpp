@@ -44,7 +44,7 @@ void LoraA39C::log(const __FlashStringHelper *str) {
         _log->println(str);
     }
 }
-void LoraA39C::log(const String str) {
+void LoraA39C::log(const String &str) {
     if (_log != nullptr) {
         _log->print("LoraA39C: ");
         _log->println(str);
