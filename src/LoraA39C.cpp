@@ -56,13 +56,21 @@ bool LoraA39C::handshake() {
     _serial.write(msg, 3);
     delay(100);
 
-    bool ok = checkRet(_serial, msg, 3); // yes, correct is same as msg
-    if (ok) {
+    CheckRecReturn ret =
+        checkRec(_serial, msg, 3,
+                 _config.timeoutMs); // yes, correct is same as msg
+    switch (ret) {
+    case CheckRecReturn::OK:
         log(F("INFO: handshake ok"));
-    } else {
-        log(F("ERROR: handshake fail"));
+        return true;
+    case CheckRecReturn::WRONG:
+        log(F("WARN: handshake received wrong byte"));
+        break;
+    case CheckRecReturn::TIMEOUT:
+        log(F("WARN: handshake timeout"));
+        break;
     }
-    return ok;
+    return false;
 }
 
 bool LoraA39C::reset() {
@@ -71,13 +79,19 @@ bool LoraA39C::reset() {
     delay(140);
 
     byte correct_buf[] = {13, 10, 79, 75, 13, 10};
-    bool ok = checkRet(_serial, correct_buf, 6);
-    if (ok) {
+    CheckRecReturn ret = checkRec(_serial, correct_buf, 6, _config.timeoutMs);
+    switch (ret) {
+    case CheckRecReturn::OK:
         log(F("INFO: reset ok"));
-    } else {
-        log(F("ERROR: reset fail"));
+        return true;
+    case CheckRecReturn::WRONG:
+        log(F("WARN: reset received wrong byte"));
+        break;
+    case CheckRecReturn::TIMEOUT:
+        log(F("WARN: reset timeout"));
+        break;
     }
-    return ok;
+    return false;
 }
 
 void LoraA39C::enterMode(Modes mode) {
@@ -197,11 +211,17 @@ bool LoraA39C::configure() {
     _serial.write(buf, 61);
     byte correct_buf[] = {0x80, 0x04, 0x1E};
     delay(100);
-    bool ok = checkRet(_serial, correct_buf, 3);
-    if (ok) {
+    CheckRecReturn ret = checkRec(_serial, correct_buf, 3, _config.timeoutMs);
+    switch (ret) {
+    case CheckRecReturn::OK:
         log(F("INFO: configure ok"));
-    } else {
-        log(F("ERROR: configure fail"));
+        return true;
+    case CheckRecReturn::WRONG:
+        log(F("WARN: configure received wrong byte"));
+        break;
+    case CheckRecReturn::TIMEOUT:
+        log(F("WARN: configure timeout"));
+        break;
     }
-    return ok;
+    return false;
 }

@@ -5,6 +5,12 @@
 #include <Arduino.h>
 
 void bufClear(Stream &);
-bool checkRet(Stream &, byte[], size_t);
+
+enum class CheckRecReturn {
+    OK = 0,
+    WRONG = 1,
+    TIMEOUT = 2,
+};
+CheckRecReturn checkRec(Stream &, byte[], size_t, unsigned long);
 
 #endif

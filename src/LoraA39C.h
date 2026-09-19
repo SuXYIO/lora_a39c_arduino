@@ -15,6 +15,12 @@ class LoraA39C : private Stream {
     };
     struct Config {
         Address address;
+        unsigned long timeoutMs = 500;
+
+        // fuck you c++, literally piece of shit
+
+        Config(Address address, unsigned long timeoutMs = 500)
+            : address(address), timeoutMs(timeoutMs) {};
     };
 
     LoraA39C(Stream &, byte, byte, Config);

@@ -6,24 +6,39 @@ void bufClear(Stream &serial) {
     }
 }
 
-// check return of stream
-bool checkRet(Stream &serial, byte buf[], size_t len) {
+/**
+ * @brief check received content of stream
+ *
+ * @param serial the stream to check
+ * @param buf the expected received content
+ * @param len the length of the buffer
+ * @param timeoutMs the timeout, in milliseconds
+ * @return 0 if ok, 1 if has wrong byte, 2 if timeout
+ */
+CheckRecReturn checkRec(Stream &serial, byte buf[], size_t len,
+                        unsigned long timeoutMs) {
     // NOTE: might run forever
     size_t cnt = 0;
-    while (true) {
-        if (cnt >= len)
-            break;
+    unsigned long start = millis();
+    while (cnt < len) {
+        // timeout
+        if (millis() - start >= timeoutMs) {
+            bufClear(serial);
+            return CheckRecReturn::TIMEOUT;
+        }
+
+        // try read
         if (serial.available() > 0) {
             byte ret = serial.read();
 
             if (ret != buf[cnt]) {
                 // wrong value
                 bufClear(serial);
-                return false;
+                return CheckRecReturn::WRONG;
             }
             cnt++;
         }
     }
     bufClear(serial);
-    return true;
+    return CheckRecReturn::OK;
 }
