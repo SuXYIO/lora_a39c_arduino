@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 
+// clear stream buffer
 void bufClear(Stream &);
 
 enum class CheckRecReturn {
@@ -11,6 +12,7 @@ enum class CheckRecReturn {
     WRONG = 1,
     TIMEOUT = 2,
 };
+// check received
 CheckRecReturn checkRec(Stream &, byte[], size_t, unsigned long);
 
 #endif

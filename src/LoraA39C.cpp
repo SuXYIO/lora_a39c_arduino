@@ -10,6 +10,7 @@ void LoraA39C::setLog(Stream *logStream) {
 }
 
 bool LoraA39C::begin() {
+    // verify config
     if (_config.address.channel > 0b01111111)
         return false;
 
@@ -115,7 +116,6 @@ void LoraA39C::enterMode(Modes mode) {
     delay(120);
 }
 
-// sends the fix-point packet header
 size_t LoraA39C::sendHeader(LoraA39C::Address targetAddress) {
     _serial.write(targetAddress.group);
     _serial.write(targetAddress.addr);
