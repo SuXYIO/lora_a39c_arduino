@@ -1,0 +1,11 @@
+PROJECT_NAME            = "LoraA39C"
+PROJECT_NUMBER          = 0.1.0
+PROJECT_BRIEF           = "Arduino library for A39C-T400A22D1a Lora wireless module"
+
+INPUT                   = src/ README.md
+USE_MDFILE_AS_MAINPAGE  = README.md
+OUTPUT_DIRECTORY        = docs/
+EXCLUDE                 = examples/
+
+GENERATE_LATEX          = NO
+QUIET                   = YES
