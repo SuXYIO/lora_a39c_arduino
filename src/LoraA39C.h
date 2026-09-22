@@ -22,8 +22,10 @@ class LoraA39C : private Stream {
      * @brief configuration representation for module
      */
     struct Config {
-        Address address;               /**< local address */
-        unsigned long timeoutMs = 500; /**< timeout waiting for response */
+        Address address; /**< local address */
+        unsigned long timeoutMs =
+            500; /**< timeout waiting for response, not same as setTimeout(),
+                    that one is for the stream itself */
 
         // fuck you c++, literally piece of shit
 
@@ -58,7 +60,7 @@ class LoraA39C : private Stream {
      */
     void end();
     /**
-     * @brief send with lora fix-point
+     * @brief send message with lora fix-point
      * @param targetAddress the address of the fix-point target
      * @param str the string to send
      * @return length of sent stuff
@@ -80,15 +82,15 @@ class LoraA39C : private Stream {
     // read-only fields access functions
 
     /**
-     * @brief read pin number of MD0
+     * @brief get pin number of MD0
      */
     byte pinMd0() { return _pinMd0; }
     /**
-     * @brief read pin number of MD1
+     * @brief get pin number of MD1
      */
     byte pinMd1() { return _pinMd1; }
     /**
-     * @brief read configuration struct
+     * @brief get configuration struct
      */
     Config config() { return _config; }
 

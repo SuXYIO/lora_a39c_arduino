@@ -41,13 +41,13 @@ void setup() {
 }
 
 void loop() {
-  // write
+  // write to remote
   // sends to remote if received in default serial
   if (Serial.available() > 0) {
     String send = Serial.readStringUntil('\n');
     lora.send(targetAddr, send + "\n");
   }
-  // read
+  // read from remote
   // sends to default serial if received from remote
   if (lora.available() > 0) {
     String received = lora.readStringUntil('\n');
